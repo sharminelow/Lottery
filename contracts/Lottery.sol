@@ -23,10 +23,6 @@ contract Lottery {
     jackpot += amount;
   }
 
-/*   function checkBet(address addr) constant returns (uint) {
-    return bets[addr];
-  }
-*/
   function checkPot() constant returns (uint256) {
     return jackpot;
   }
