@@ -13,27 +13,27 @@ contract('Lottery', function(accounts) {
 
   it("Place a bet", function(done) {
 
-  	Lottery.new({ from: acc1 }).then(function(lot) {
+    Lottery.new({ from: acc1 }).then(function(lot) {
 
       var bet = web3.toBigNumber(web3.toWei(0.05, 'ether'));
       var accBal = web3.toBigNumber(web3.eth.getBalance(acc1));
       var initialContractBal = web3.eth.getBalance(lot.address).toNumber();  
 
-			lot.buyBet(4, { from: acc1, value: bet}).then(function() {
+      lot.buyBet(4, { from: acc1, value: bet}).then(function() {
         var newContractBal = web3.eth.getBalance(lot.address).toNumber();
         var contractDiff = newContractBal - initialContractBal;
-				
+
         assert.equal(contractDiff, bet, "Difference in contract balance should be the bet");
-				return lot.checkPot.call(); 
-			}).then(function(pot) { 
+        return lot.checkPot.call(); 
+      }).then(function(pot) { 
         var endAccBal = web3.toBigNumber(web3.eth.getBalance(acc1));
         var diff = accBal.minus(endAccBal).abs();
 
         assert.equal(pot, bet.toNumber(), "Jackpot should be equal to bet");
         assert.deepEqual(diff, bet.plus(estGasForBetting), "User1 acc should decrease by bet value and gas");
         done();
-			}).catch(done);
-  	}).catch(done);
+      }).catch(done);
+    }).catch(done);
   });
 
 
