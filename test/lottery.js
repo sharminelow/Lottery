@@ -3,7 +3,7 @@ contract('Lottery', function(accounts) {
 	var acc1 = accounts[0];
   var acc2 = accounts[1];
   var acc3 = accounts[2];
-  var gasPrice = 1; // defaults to 1 in testing
+  var gasPrice = 100000000000; // default
 
   // gas usage for each transaction
   var estContractFee = web3.toBigNumber('85306300000000000');

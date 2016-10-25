@@ -9,6 +9,11 @@ module.exports = {
     ],
     "images/": "images/"
   },
+  networks: {
+    "private" : {
+      network_id: 2387
+    }
+  },
   rpc: {
     host: "localhost",
     port: 8545
