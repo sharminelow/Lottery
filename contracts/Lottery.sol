@@ -40,8 +40,15 @@ contract Lottery {
                          moneyBet: amount }));
     jackpot += amount;
 
-    // check if bidingRound ended
-    // isBetRoundClosed()
+    // check if bettingRound ended
+    if(isBetRoundClosed() == true) {
+      round = Rounds.commitRound;   
+    }
+  }
+
+  // stub method
+  function isBetRoundClosed() returns (bool) {
+    return false;
   }
 
   modifier atRound(Rounds _round) {
@@ -56,10 +63,6 @@ contract Lottery {
 
 
 /*
-
-  function isBetRoundClosed() {
-    round = Rounds.commitRound    
-  }
 
    function genWinningNumber() internal returns (uint) {
     
