@@ -2,65 +2,75 @@ pragma solidity ^0.4.2;
 
 contract Lottery {
 
-  struct Bet {
+  enum Rounds {
+    betRound,
+    commitRound
+  }
+
+  struct Ticket {
     address addr;
-    uint num;
+    uint ticketNum;
+    bytes32 commitHash;
     uint256 moneyBet;
   }
 
-  mapping (address => uint256) winnings;
+  // constants
+  Rounds public round = Rounds.betRound;
+  uint ticketMax = 4;
+  uint public lotteryStart = 0;
+  uint public lotteryDuration = 0;
+  uint public commitDuration = 0;
+
   uint256 public jackpot = 0;
-  uint public numPlayers = 0;
-  Bet[] public bets;
-  uint[] winners;
+  uint[] public winners;
+  Ticket[] public tickets;
 
-  // event LotteryEnded(address winner, uint lotteryNum);
+  function buyTicket(uint chosenNum, bytes32 hash) payable
+    atRound(Rounds.betRound) 
+    withinRange(chosenNum) {
 
-  // needs to check ether balance and deduct
-  function buyBet(uint chosenNum) payable {
+    if (tickets.length == 0) {
+      lotteryStart = now;
+    }
+
     uint256 amount = msg.value;
-    bets.push(Bet({addr: msg.sender, num: chosenNum, moneyBet: amount }));
+    tickets.push(Ticket({addr: msg.sender,
+                         ticketNum: chosenNum,
+                         commitHash: hash,
+                         moneyBet: amount }));
     jackpot += amount;
+
+    // check if bidingRound ended
+    // isBetRoundClosed()
   }
 
-  function checkPot() constant returns (uint256) {
-    return jackpot;
+  modifier atRound(Rounds _round) {
+    if (round != _round) throw;
+    _;
   }
 
-/**
- * stub methods for testing purposes
- */
-
-  function stubGenWinningNumber() internal returns (uint) {
-    return 4;
+  modifier withinRange(uint chosenNum) {
+      if (chosenNum > ticketMax) throw;
+      _;
   }
 
-  //deadline >= block.number
-   function stubEndLottery() {
-    // gas to be paid by lottery
-    uint winningNum = stubGenWinningNumber();
-    uint j = 0;
 
-    // note who won, record index
-     for(uint i = 0; i < bets.length; i++) { 
-      if(bets[i].num == winningNum) {
-        winners.push(i);
-      }
-    }
+/*
 
-    // distribute winnings
-    uint numWinners = winners.length;
-    uint256 share = jackpot/numWinners;
+  function isBetRoundClosed() {
+    round = Rounds.commitRound    
+  }
 
-    for(uint k = 0; k < numWinners; k++) {
-      uint index = winners[j];
-      if(!bets[index].addr.send(share)) {
-        throw;
-      }
-    }
+   function genWinningNumber() internal returns (uint) {
+    
+  }
 
-    jackpot = 0; 
-    return;
-  } 
+  function endLottery() internal {
+    // genWinningNum
+    // distributeWinnings
+    // reset variables, startLottery
+    // announcements
+  }
 
+  */
 }

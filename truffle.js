@@ -11,7 +11,8 @@ module.exports = {
   },
   networks: {
     "private" : {
-      network_id: 2387
+      network_id: 2387,
+      port: 8101
     }
   },
   rpc: {
