@@ -4,7 +4,8 @@ contract Lottery {
 
   enum Rounds {
     betRound,
-    commitRound
+    commitRound,
+    claimRound
   }
 
   struct Ticket {
@@ -27,6 +28,7 @@ contract Lottery {
 
   function buyTicket(uint chosenNum, bytes32 hash) payable
     atRound(Rounds.betRound) 
+    isUniqueHash(hash)
     withinRange(chosenNum) {
 
     if (tickets.length == 0) {
@@ -51,14 +53,23 @@ contract Lottery {
     return false;
   }
 
+  modifier isUniqueHash(bytes32 hash) {
+    uint length = tickets.length;
+    for (uint i = 0; i < length; i++) {
+      if (tickets[i].commitHash == hash)
+        throw;
+    }
+    _;
+  }
+
   modifier atRound(Rounds _round) {
     if (round != _round) throw;
     _;
   }
 
   modifier withinRange(uint chosenNum) {
-      if (chosenNum > ticketMax) throw;
-      _;
+    if (chosenNum > ticketMax) throw;
+    _;
   }
 
 

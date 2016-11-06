@@ -5,6 +5,7 @@ contract('Lottery', function(accounts) {
   var acc3 = accounts[2];
   var gasPrice = 100000000000; // default
   var hash = 'ca978112ca1bbdcafac231b39a23dc4da786eff8147c4e72b9807785afee48bb'
+  var hash2 = '12378112ca1bbdcafac231b39a23dc4da786eff8147c4e72b9807785afee48bb'
 
   it("Buy a ticket", function(done) {
 
@@ -42,14 +43,13 @@ contract('Lottery', function(accounts) {
 
       lot.buyTicket(10, hash, { from: acc2, value: bet })
       .catch(function(err) {
-        if(err) {
-          done();
-        } 
+        assert.notEqual(err, null, "Error should exist");
+        done();
       })
     });
   });
 
-  it("Two people buy tickets", function(done) {
+  it("Two people buy tickets with same hash", function(done) {
 
     Lottery.new({ from: acc1 }).then(function(lot) {
 
@@ -63,6 +63,28 @@ contract('Lottery', function(accounts) {
         lot.lotteryStart.call().then(function(start) {
           firstStart = start;
           return lot.buyTicket(1, hash, { from: acc3, value: bet2 })
+        }).catch(function(err) {
+          assert.notEqual(err, null, "Error should exist");
+          done();
+        });
+      });
+    });
+  });
+
+  it("Two people buy tickets with diff hash", function(done) {
+
+    Lottery.new({ from: acc1 }).then(function(lot) {
+
+      var bet = web3.toWei(0.05, 'ether');
+      var bet2 = web3.toWei(0.07, 'ether');
+      var sumOfBets = Number(bet) + Number(bet2);
+      var firstStart = 0;
+      var initialContractBal = web3.eth.getBalance(lot.address).toNumber(); 
+
+      lot.buyTicket(3, hash, { from: acc2, value: bet }).then(function() {
+        lot.lotteryStart.call().then(function(start) {
+          firstStart = start;
+          return lot.buyTicket(1, hash2, { from: acc3, value: bet2 })
         }).then(function() {
           var newContractBal = web3.eth.getBalance(lot.address).toNumber();
           var contractDiff = newContractBal - initialContractBal;
