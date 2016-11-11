@@ -102,5 +102,15 @@ contract('Lottery', function(accounts) {
     }).catch(done);
   });
 
+  it("Check owner", function(done) {
+
+    Lottery.new({ from: acc1 }).then(function(lot) {
+      lot.banker.call().then(function(owner) {
+        assert.equal(owner, acc1, "Owner is the same");
+        done();
+      })
+    });
+  });
+
 });
 

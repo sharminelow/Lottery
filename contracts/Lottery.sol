@@ -20,16 +20,28 @@ contract Lottery {
     uint commitNum;
   }
   
-  // constants
+  address public banker = msg.sender;
+
+  // Testing
   Rounds public round = Rounds.betRound;
+  uint public ticketMax = 4;
+  uint public lotteryStart = 0;
+  uint public commitStart = 0;
+  uint public claimStart = 0;
+  uint public lotteryDuration = 10;
+  uint public commitDuration = 10;
+  uint public claimDuration = 1209600;
+
+
+  // constants
+/*   Rounds public round = Rounds.betRound;
   uint ticketMax = 4;
-  // i think these shouldn't be public?
   uint lotteryStart = 0;
   uint commitStart = 0;
   uint claimStart = 0;
   uint lotteryDuration = 10;
   uint commitDuration = 10;
-  uint claimDuration = 1209600;
+  uint claimDuration = 1209600; */
 
   uint256 public jackpot = 0;
   mapping(address => Ticket[]) public winners;
