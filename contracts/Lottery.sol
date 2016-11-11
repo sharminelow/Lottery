@@ -33,6 +33,7 @@ contract Lottery {
 
   uint256 public jackpot = 0;
   mapping(address => Ticket[]) public winners;
+  mapping(address => Ticket[]) public claimers;
   Ticket[] tickets;
   Commitment[] commitments;
   Ticket[] successfulTickets;
@@ -117,13 +118,11 @@ contract Lottery {
 
     if(successfulTickets.length == 0) {
       for(uint i = 0; i < tickets.length; i++) {
-      //  tickets[i].addr.send(tickets[i].moneyBet); put to claim
+        claimers[tickets[i].addr].push(tickets[i]);
       }
     } else if(numOfBets - successfulTickets.length > 0) {
-      uint finesToBeDistributed = (jackpot - amountOfRevealedBets) / successfulTickets.length;
-
       for(i = 0; i < successfulTickets.length; i++) {
-      //  successfulTickets[i].addr.send(successfulTickets[i].moneyBet + finesToBeDistributed); // put to claim
+        claimers[successfulTickets[i].addr].push(successfulTickets[i]);
       }
     } else {
       tickets = successfulTickets;
@@ -131,6 +130,16 @@ contract Lottery {
       endLottery();
     }
 
+  }
+
+  function claimRefunds() payable {
+    for(uint i = 0; i < claimers[msg.sender].length; i++) {
+      uint256 amtRefund = claimers[msg.sender][i].moneyBet;
+      delete claimers[msg.sender][i];
+      if (!msg.sender.send(amtRefund)) {
+        throw;
+      }
+    }
   }
 
   function genWinningNumber() internal returns (uint) {
