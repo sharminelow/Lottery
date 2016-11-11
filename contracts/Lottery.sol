@@ -169,16 +169,12 @@ contract Lottery {
   */
   }
   
-  // Ends lottery round (should be changed to internal after integrating)
-  function endLottery() {
+  function endLottery() internal {
     // generate winning number
-    // uint winningNum = genWinningNumber();
-    uint winningNum = 1; // Hardcoded until genWinningNumber() is ready
+    uint winningNum = genWinningNumber();
     
-    jackpot = 0;
-    // determine winners, jackpot and moneyBet pool
+    // determine winners and moneyBet pool
     for(uint i = 0; i < tickets.length; i++) {
-      jackpot += tickets[i].moneyBet;
       if(tickets[i].ticketNum == winningNum) {
         winners[tickets[i].addr].push(tickets[i]);
         moneyBetPool += tickets[i].moneyBet;
