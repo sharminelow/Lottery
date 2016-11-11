@@ -30,8 +30,10 @@ contract Lottery {
   uint public commitDuration = 0;
 
   uint256 public jackpot = 0;
-  uint[] public winners;
+  mapping(address => Ticket[]) public winners;
   Ticket[] public tickets;
+
+  uint256 public moneyBetPool = 0;
 
   function buyTicket(uint chosenNum, bytes32 hash) payable
     atRound(Rounds.betRound) 
@@ -151,12 +153,38 @@ contract Lottery {
     return winningNumber;   
   }
 
-  function endLottery() internal {
-    // genWinningNum
-    // distributeWinnings
-    // reset variables, startLottery
+*/
+  
+  // Ends lottery round (should be changed to internal after integrating)
+  function endLottery() {
+    // generate winning number
+    // uint winningNum = genWinningNumber();
+    uint winningNum = 1; // Hardcoded until genWinningNumber() is ready
+    
+    jackpot = 0;
+    // determine winners, jackpot and moneyBet pool
+    for(uint i = 0; i < tickets.length; i++) {
+      jackpot += tickets[i].moneyBet;
+      if(tickets[i].ticketNum == winningNum) {
+        winners[tickets[i].addr].push(tickets[i]);
+        moneyBetPool += tickets[i].moneyBet;
+      }
+    }
+
+    // reset variables
+    // startLottery
     // announcements
   }
 
-  */
+  // Claims all winnings for the particular user
+  function claimWinnings() payable {
+    for(uint i = 0; i < winners[msg.sender].length; i++) {
+      uint256 amtWon = winners[msg.sender][i].moneyBet / moneyBetPool * jackpot;
+      delete winners[msg.sender][i];
+      if (!msg.sender.send(amtWon)) {
+        throw;
+      }
+    }
+  }
 }
+
