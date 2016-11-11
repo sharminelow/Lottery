@@ -7,7 +7,7 @@ contract('Lottery', function(accounts) {
   var hash = 'd4735e3a265e16eee03f59718b9b5d03019c07d8b6c51f90da3a666eec13ab35'; // hash for number 2
   var hash2 = '12378112ca1bbdcafac231b39a23dc4da786eff8147c4e72b9807785afee48bb';
 
-  it("Buy a ticket", function(done) {
+  it("Successfully buy a ticket", function(done) {
 
     Lottery.new({ from: acc1 }).then(function(lot) {
 
@@ -35,7 +35,7 @@ contract('Lottery', function(accounts) {
     }).catch(done);
   });
 
-  it("Buy ticket number that is out of bounds", function(done) {
+  it("Throw error if ticket number is out of bounds", function(done) {
 
     Lottery.new({ from: acc1 }).then(function(lot) {
 
@@ -49,7 +49,7 @@ contract('Lottery', function(accounts) {
     });
   });
 
-  it("Two people buy tickets with same hash", function(done) {
+  it("Reject with same hash", function(done) {
 
     Lottery.new({ from: acc1 }).then(function(lot) {
 
@@ -71,7 +71,7 @@ contract('Lottery', function(accounts) {
     });
   });
 
-  it("Two people buy tickets with diff hash", function(done) {
+  it("Successfully buy 2 tickets", function(done) {
 
     Lottery.new({ from: acc1 }).then(function(lot) {
 
@@ -112,18 +112,6 @@ contract('Lottery', function(accounts) {
     });
   });
 
-  it("Change to commit round", function(done) {
-
-    Lottery.new({ from: acc1 }).then(function(lot) {
-      lot.stubChangeCommitRound().then(function() {
-        lot.round.call().then(function(round) {
-          assert.equal(round, "1", "Round should be commit round");
-          done();
-        })
-      })
-    });
-  });
-
   it("Transit bet round to commit round after 1 second", function(done) {
 
     Lottery.new({ from: acc1 }).then(function(lot) {
@@ -146,6 +134,25 @@ contract('Lottery', function(accounts) {
       }).catch(done);
     }).catch(done);
   });
+
+  // this time will pass/fail depending on race conditions, but event is emitted
+/*  it("ticket purchase event shoud emit", function(done) {
+
+      var lot = Lottery.deployed();
+      var bet = web3.toBigNumber(web3.toWei(0.05, 'ether'));
+      var watcher = lot.TicketPurchased();
+
+      lot.buyTicket(3, hash, { from: acc2, value: bet }).then(function() {
+        watcher.watch(function(error, result){
+          if (!error) {
+            console.log(result);
+            watcher.stopWatching();
+            done();
+          }
+        });
+      });
+
+  }).timeout(1000);*/
 
 });
 

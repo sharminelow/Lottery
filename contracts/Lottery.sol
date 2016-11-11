@@ -30,17 +30,17 @@ contract Lottery {
   uint public claimStart = 0;
   uint public lotteryDuration = 1; // 1 seconds;
   uint public commitDuration = 10;
-  uint public claimDuration = 1209600;
+  uint public claimDuration = 10;
 
 
   // constants
 /*   Rounds public round = Rounds.betRound;
-  uint ticketMax = 4;
+  uint ticketMax = 1024;
   uint lotteryStart = now;
   uint commitStart = 0;
   uint claimStart = 0;
-  uint lotteryDuration = 10;
-  uint commitDuration = 10;
+  uint lotteryDuration = 3 days;
+  uint commitDuration = 3 days;
   uint claimDuration = 1209600; */
 
   uint256 public jackpot = 0;
@@ -52,6 +52,9 @@ contract Lottery {
   Commitment[] successfulCommitments;
 
   uint256 public moneyBetPool = 0;
+
+  event TicketPurchased(address from, uint bet);
+  event TicketValidated(address from);
 
   function buyTicket(uint chosenNum, bytes32 hash) payable
     timedTransitions
@@ -65,6 +68,7 @@ contract Lottery {
                          commitHash: hash,
                          moneyBet: amount }));
     jackpot += amount;
+    TicketPurchased(msg.sender, amount);
   }
 
   modifier isUniqueHash(bytes32 hash) {
