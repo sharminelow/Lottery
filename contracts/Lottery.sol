@@ -15,23 +15,28 @@ contract Lottery {
     uint256 moneyBet;
   }
 
-  /*
   struct Commitment {
     address addr;
     uint commitNum;
   }
-  */
-
+  
   // constants
   Rounds public round = Rounds.betRound;
   uint ticketMax = 4;
-  uint public lotteryStart = 0;
-  uint public lotteryDuration = 0;
-  uint public commitDuration = 0;
+  // i think these shouldn't be public?
+  uint lotteryStart = 0;
+  uint commitStart = 0;
+  uint claimStart = 0;
+  uint lotteryDuration = 10;
+  uint commitDuration = 10;
+  uint claimDuration = 1209600;
 
   uint256 public jackpot = 0;
   mapping(address => Ticket[]) public winners;
-  Ticket[] public tickets;
+  Ticket[] tickets;
+  Commitment[] commitments;
+  Ticket[] successfulTickets;
+  Commitment[] successfulCommitments;
 
   uint256 public moneyBetPool = 0;
 
@@ -54,12 +59,13 @@ contract Lottery {
     // check if bettingRound ended
     if(isBetRoundClosed() == true) {
       round = Rounds.commitRound;   
+      commitStart = now;
     }
   }
 
   // stub method
   function isBetRoundClosed() returns (bool) {
-    return false;
+    return ((now - lotteryStart) > lotteryDuration);
   }
 
   modifier isUniqueHash(bytes32 hash) {
@@ -81,28 +87,26 @@ contract Lottery {
     _;
   }
 
-
-/*
-
-  function closeCommitRound(uint lotteryEnd) {
-    if(block.timestamp - lotteryEnd > commitDuration) {
-      checkCommitments(lotteryEnd);
-      round = Rounds.claimRound;
+  function sendCommitNumber(uint num) atRound(Rounds.commitRound) {
+    commitments.push(Commitment({addr: msg.sender, commitNum: num}));
+    if (isCommitRoundClosed()) {
+      checkCommitments();
     }
   }
 
-  function checkCommitments(uint lotteryEnd) payable
-    atRound(Rounds.commitRound) {
+  function isCommitRoundClosed() returns (bool) {
+    return ((now - commitStart) > commitDuration);
+  }
+
+  function checkCommitments() internal {
 
     uint numOfBets = tickets.length;
     uint amountOfRevealedBets = 0;
-    Ticket[] successfulTickets empty;
-    Commitment[] successfulCommitments empty;
 
     for(uint t = 0; t < tickets.length; t++) {
       for(uint c = 0; c < commitments.length; c++) {
-        if(sha256(commitments[c].commitNum ^ commitments[c].addr) == tickets[t].commitHash && 
-          commitments[c].addr == tickets[t].addr) {
+      //  if(sha256(commitments[c].commitNum ^ commitments[c].addr) == tickets[t].commitHash && commitments[c].addr == tickets[t].addr) {
+        if(sha256(commitments[c].commitNum) == tickets[t].commitHash && commitments[c].addr == tickets[t].addr) {
           amountOfRevealedBets += tickets[t].moneyBet;
           successfulTickets.push(tickets[t]);
           successfulCommitments.push(commitments[c]);
@@ -113,13 +117,13 @@ contract Lottery {
 
     if(successfulTickets.length == 0) {
       for(uint i = 0; i < tickets.length; i++) {
-        tickets[i].addr.send(tickets[i].moneyBet);
+      //  tickets[i].addr.send(tickets[i].moneyBet); put to claim
       }
     } else if(numOfBets - successfulTickets.length > 0) {
       uint finesToBeDistributed = (jackpot - amountOfRevealedBets) / successfulTickets.length;
 
-      for(uint i = 0; i < successfulTickets.length; i++) {
-        successfulTickets[i].addr.send(successfulTickets[i].moneyBet + finesToBeDistributed);
+      for(i = 0; i < successfulTickets.length; i++) {
+      //  successfulTickets[i].addr.send(successfulTickets[i].moneyBet + finesToBeDistributed); // put to claim
       }
     } else {
       tickets = successfulTickets;
@@ -130,6 +134,8 @@ contract Lottery {
   }
 
   function genWinningNumber() internal returns (uint) {
+    return 0;
+  /*  
     uint currentBlockNumber = block.number;
     bytes32 xorBlockHashes = 0;
     uint xorCommitmentNumber = 0;
@@ -150,10 +156,9 @@ contract Lottery {
 
     uint winningNumber = last10Bits & "0xfff";
 
-    return winningNumber;   
+    return winningNumber;
+  */
   }
-
-*/
   
   // Ends lottery round (should be changed to internal after integrating)
   function endLottery() {
