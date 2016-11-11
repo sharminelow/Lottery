@@ -101,7 +101,14 @@ contract Lottery {
   }
 
   function sendCommitNumber(uint num) atRound(Rounds.commitRound) {
-    commitments.push(Commitment({addr: msg.sender, commitNum: num}));
+    for(uint t = 0; t < tickets.length; t++) {
+      if(sha256(num ^ uint(msg.sender)) == tickets[t].commitHash && msg.sender == tickets[t].addr) {
+        commitments.push(Commitment({addr: msg.sender, commitNum: num}));
+        successfulTickets.push(tickets[t]); // for partial commitment case
+        break;
+      }
+    }
+
     if (isCommitRoundClosed()) {
       checkCommitments();
     }
@@ -112,33 +119,15 @@ contract Lottery {
   }
 
   function checkCommitments() internal {
-
-    uint numOfBets = tickets.length;
-    uint amountOfRevealedBets = 0;
-
-    for(uint t = 0; t < tickets.length; t++) {
-      for(uint c = 0; c < commitments.length; c++) {
-      //  if(sha256(commitments[c].commitNum ^ commitments[c].addr) == tickets[t].commitHash && commitments[c].addr == tickets[t].addr) {
-        if(sha256(commitments[c].commitNum) == tickets[t].commitHash && commitments[c].addr == tickets[t].addr) {
-          amountOfRevealedBets += tickets[t].moneyBet;
-          successfulTickets.push(tickets[t]);
-          successfulCommitments.push(commitments[c]);
-          break;
-        }
-      }
-    }
-
-    if(successfulTickets.length == 0) {
+    if(commitments.length == 0) {
       for(uint i = 0; i < tickets.length; i++) {
         claimers[tickets[i].addr].push(tickets[i]);
       }
-    } else if(numOfBets - successfulTickets.length > 0) {
+    } else if(commitments.length != tickets.length) {
       for(i = 0; i < successfulTickets.length; i++) {
         claimers[successfulTickets[i].addr].push(successfulTickets[i]);
       }
     } else {
-      tickets = successfulTickets;
-      commitments = successfulCommitments;
       endLottery();
     }
 
