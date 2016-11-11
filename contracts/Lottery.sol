@@ -25,10 +25,10 @@ contract Lottery {
   // Testing
   Rounds public round = Rounds.betRound;
   uint public ticketMax = 4;
-  uint public lotteryStart = 0;
+  uint public lotteryStart = now;
   uint public commitStart = 0;
   uint public claimStart = 0;
-  uint public lotteryDuration = 10;
+  uint public lotteryDuration = 1; // 1 seconds;
   uint public commitDuration = 10;
   uint public claimDuration = 1209600;
 
@@ -36,7 +36,7 @@ contract Lottery {
   // constants
 /*   Rounds public round = Rounds.betRound;
   uint ticketMax = 4;
-  uint lotteryStart = 0;
+  uint lotteryStart = now;
   uint commitStart = 0;
   uint claimStart = 0;
   uint lotteryDuration = 10;
@@ -54,13 +54,10 @@ contract Lottery {
   uint256 public moneyBetPool = 0;
 
   function buyTicket(uint chosenNum, bytes32 hash) payable
+    timedTransitions
     atRound(Rounds.betRound) 
     isUniqueHash(hash)
     withinRange(chosenNum) {
-
-    if (tickets.length == 0) {
-      lotteryStart = now;
-    }
 
     uint256 amount = msg.value;
     tickets.push(Ticket({addr: msg.sender,
@@ -68,17 +65,6 @@ contract Lottery {
                          commitHash: hash,
                          moneyBet: amount }));
     jackpot += amount;
-
-    // check if bettingRound ended
-    if(isBetRoundClosed() == true) {
-      round = Rounds.commitRound;   
-      commitStart = now;
-    }
-  }
-
-  // stub method
-  function isBetRoundClosed() returns (bool) {
-    return ((now - lotteryStart) > lotteryDuration);
   }
 
   modifier isUniqueHash(bytes32 hash) {
@@ -113,6 +99,28 @@ contract Lottery {
       checkCommitments();
     }
   }
+
+  modifier timedTransitions() {
+    if (round == Rounds.betRound &&
+       ((now - lotteryStart) > lotteryDuration)) {
+      round = Rounds.commitRound;   
+      commitStart = now;
+    }
+    _;
+  }
+
+  // Start of testing methods
+  function stubSendNum(uint num) 
+    timedTransitions
+    atRound(Rounds.commitRound) returns (bool) {
+    return true;
+  }
+
+  function stubChangeCommitRound() {
+    round = Rounds.commitRound;
+  }
+
+  // End of testing methods
 
   function isCommitRoundClosed() returns (bool) {
     return ((now - commitStart) > commitDuration);

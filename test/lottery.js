@@ -4,8 +4,8 @@ contract('Lottery', function(accounts) {
   var acc2 = accounts[1];
   var acc3 = accounts[2];
   var gasPrice = 100000000000; // default
-  var hash = 'ca978112ca1bbdcafac231b39a23dc4da786eff8147c4e72b9807785afee48bb'
-  var hash2 = '12378112ca1bbdcafac231b39a23dc4da786eff8147c4e72b9807785afee48bb'
+  var hash = 'd4735e3a265e16eee03f59718b9b5d03019c07d8b6c51f90da3a666eec13ab35'; // hash for number 2
+  var hash2 = '12378112ca1bbdcafac231b39a23dc4da786eff8147c4e72b9807785afee48bb';
 
   it("Buy a ticket", function(done) {
 
@@ -110,6 +110,41 @@ contract('Lottery', function(accounts) {
         done();
       })
     });
+  });
+
+  it("Change to commit round", function(done) {
+
+    Lottery.new({ from: acc1 }).then(function(lot) {
+      lot.stubChangeCommitRound().then(function() {
+        lot.round.call().then(function(round) {
+          assert.equal(round, "1", "Round should be commit round");
+          done();
+        })
+      })
+    });
+  });
+
+  it("Transit bet round to commit round after 1 second", function(done) {
+
+    Lottery.new({ from: acc1 }).then(function(lot) {
+
+      var bet = web3.toBigNumber(web3.toWei(0.05, 'ether'));
+
+      lot.buyTicket(3, hash, { from: acc2, value: bet }).then(function() {
+        return lot.round.call(); 
+      }).then(function(round) { 
+        assert.equal(round, "0", "Round should be bet round");
+        setTimeout(function() {
+          // someone calls after 4 seconds
+          lot.stubSendNum(2).then(function(res) {
+            lot.round.call().then(function(round) {
+              assert.equal(round, "1", "Round should be commit round");
+              done();
+            })            
+          })
+        }, 4000); 
+      }).catch(done);
+    }).catch(done);
   });
 
 });
