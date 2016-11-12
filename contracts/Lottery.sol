@@ -139,7 +139,11 @@ contract Lottery {
   function getCommitHash(uint num) returns (bytes32) {
     return sha256(num);
   }
-
+  
+  function stubEndLottery() {
+    endLottery();
+  }  
+  
   // End of testing methods
 
   function isCommitRoundClosed() returns (bool) {
@@ -198,7 +202,7 @@ contract Lottery {
   */
   }
   
-  function endLottery() {
+  function endLottery() internal {
     // generate winning number
     uint winningNum = genWinningNumber();
     

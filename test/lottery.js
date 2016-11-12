@@ -247,7 +247,6 @@ it("Send commitment, claimRefunds returning 0 and claimWinnings", function(done)
 
       var bet = web3.toWei(0.05, 'ether');
       var bet2 = web3.toWei(0.07, 'ether');
-      var sumOfBets = Number(bet) + Number(bet2);
       var firstStart = 0;
       var initialAcc2Balance;
       var acc2Diff;
@@ -258,7 +257,7 @@ it("Send commitment, claimRefunds returning 0 and claimWinnings", function(done)
         newContractBal = web3.eth.getBalance(lot.address).toNumber();
         return lot.stubChangeClaimRound();
       }).then(function() { 
-        return lot.endLottery();          
+        return lot.stubEndLottery();          
       }).then(function() {
         return lot.moneyBetPool.call();
       }).then(function(moneyBetPool) {
