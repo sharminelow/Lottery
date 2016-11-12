@@ -33,15 +33,15 @@ contract Lottery {
   uint public claimDuration = 10;
 
 
-  // constants
+  // Demo
 /*   Rounds public round = Rounds.betRound;
-  uint ticketMax = 1024;
+  uint ticketMax = 4;
   uint lotteryStart = now;
   uint commitStart = 0;
   uint claimStart = 0;
-  uint lotteryDuration = 3 days;
-  uint commitDuration = 3 days;
-  uint claimDuration = 1209600; */
+  uint lotteryDuration = 1 minutes;
+  uint commitDuration = 1 minutes;
+  uint claimDuration = 1 minutes; */ 
 
   uint256 public jackpot = 0;
   mapping(address => Ticket[]) public winners;
@@ -57,7 +57,7 @@ contract Lottery {
   event TicketValidated(address from, bytes32 hash);
   event TicketInvalid(address from);
   event LotteryEnded();
-  event AllCommitsReceived();
+  event AllCommitsReceived(uint num);
   event ClaimSuccess(address from, uint amt);
 
   modifier isUniqueHash(bytes32 hash) {
@@ -124,7 +124,7 @@ contract Lottery {
 
     if (successfulTickets.length == tickets.length) {
       round = Rounds.claimRound;
-      AllCommitsReceived(); // event
+      AllCommitsReceived(successfulTickets.length); // event
       checkCommitments();
     }
 
