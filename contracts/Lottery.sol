@@ -41,7 +41,7 @@ contract Lottery {
   uint claimStart = 0;
   uint lotteryDuration = 1 minutes;
   uint commitDuration = 1 minutes;
-  uint claimDuration = 1 minutes; */ 
+  uint claimDuration = 1 minutes;  */
 
   uint256 public jackpot = 0;
   mapping(address => Ticket[]) public winners;
@@ -55,22 +55,29 @@ contract Lottery {
 
   event TicketPurchased(address from, uint bet);
   event TicketValidated(address from, bytes32 hash);
+  event TicketRejected();
   event TicketInvalid(address from);
   event LotteryEnded();
   event AllCommitsReceived(uint num);
   event ClaimSuccess(address from, uint amt);
+  event WrongRound(Rounds round);
 
   modifier isUniqueHash(bytes32 hash) {
     uint length = tickets.length;
     for (uint i = 0; i < length; i++) {
-      if (tickets[i].commitHash == hash)
+      if (tickets[i].commitHash == hash) {
+        TicketRejected();
         throw;
+      }
     }
     _;
   }
 
   modifier atRound(Rounds _round) {
-    if (round != _round) throw;
+    if (round != _round) {
+      WrongRound(round);
+      throw;
+    }
     _;
   }
 
@@ -107,6 +114,10 @@ contract Lottery {
                          moneyBet: amount }));
     jackpot += amount;
     TicketPurchased(msg.sender, amount);
+  }
+
+  function getNumTickets() returns (uint) {
+    return tickets.length;
   }
 
   function sendCommitNumber(uint num) atRound(Rounds.commitRound) {
