@@ -99,9 +99,12 @@ contract Lottery {
       }
     }
 
+    /* 
+    xh: i think this part shouldnt be inside this function
     if (isCommitRoundClosed()) {
       checkCommitments();
     }
+    */
   }
 
   modifier timedTransitions() {
@@ -122,6 +125,11 @@ contract Lottery {
 
   function stubChangeCommitRound() {
     round = Rounds.commitRound;
+  }
+
+  // xh: for my test, i didnt account for time so i went straight to check commitments instead.
+  function stubCloseCommitRound() {
+    checkCommitments();
   }
 
   // End of testing methods

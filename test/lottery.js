@@ -135,6 +135,38 @@ contract('Lottery', function(accounts) {
     }).catch(done);
   });
 
+  it("Send commitment and get refund", function(done) {
+
+    Lottery.new({ from: acc1 }).then(function(lot) {
+
+      var bet = web3.toBigNumber(web3.toWei(0.05, 'ether'));
+      var balance = web3.eth.getBalance(acc2).toNumber();
+
+      lot.buyTicket(3, hash, { from: acc2, value: bet }).then(function() {
+        return lot.round.call();
+      }).then(function(round) {
+        assert.equal(round, "0", "Round should be bet round");
+        lot.stubChangeCommitRound().then(function() {
+          lot.round.call().then(function(round) {
+            assert.equal(round, "1", "Round should be commit round");
+
+            lot.sendCommitNumber(3, { from: acc2 }).then(function() {
+              lot.stubCloseCommitRound().then(function() {
+                balance = web3.eth.getBalance(acc2).toNumber();
+                lot.claimRefunds({ from: acc2 }).then(function() {
+                  var currentBalance = web3.eth.getBalance(acc2).toNumber();
+                  var costOfClaimRefunds = 2470899999997952; // xh: i don't know if this varies for you guys.
+                  assert.equal(currentBalance - balance + costOfClaimRefunds, bet, "Bet is refunded");
+                  done();
+                }).catch(done);
+              }).catch(done);
+            }).catch(done);
+          }).catch(done);
+        }).catch(done);
+      }).catch(done);
+    }).catch(done);
+  });
+
   // this time will pass/fail depending on race conditions, but event is emitted
 /*  it("ticket purchase event shoud emit", function(done) {
 
