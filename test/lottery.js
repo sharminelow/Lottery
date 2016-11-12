@@ -194,8 +194,8 @@ contract('Lottery', function(accounts) {
       var bet2 = web3.toWei(0.07, 'ether');
       var sumOfBets = Number(bet) + Number(bet2);
       var firstStart = 0;
-      var initialAcc2Balance = 0;
-      var newContractBal = 0;
+      var initialAcc2Balance;
+      var acc2Diff;
 
       lot.buyTicket(0, hash, { from: acc2, value: bet }).then(function() {
         return lot.buyTicket(1, hash2, { from: acc3, value: bet2 });
@@ -211,11 +211,13 @@ contract('Lottery', function(accounts) {
         initialAcc2Balance = web3.eth.getBalance(acc2).toNumber();
         return lot.claimWinnings({ from: acc2 });
       }).then(function() {
-        newAcc2Balance = web3.eth.getBalance(acc2).toNumber();
+        var newAcc2Balance = web3.eth.getBalance(acc2).toNumber();
         acc2Diff = newAcc2Balance - initialAcc2Balance;
         return lot.jackpot.call();
       }).then(function(pot) {
         assert(Number(pot) - acc2Diff < 2500000000000000, "Amount credited should equal jackpot");
+        var contractBalance = web3.eth.getBalance(lot.address).toNumber();
+        assert.equal(contractBalance, 0, "Contract account should be empty")
         done();
       }).catch(done);
     }).catch(done);
