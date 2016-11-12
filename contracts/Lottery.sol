@@ -124,6 +124,10 @@ contract Lottery {
     round = Rounds.commitRound;
   }
 
+  function stubChangeClaimRound() {
+    round = Rounds.claimRound;
+  }
+
   // End of testing methods
 
   function isCommitRoundClosed() returns (bool) {
@@ -182,7 +186,7 @@ contract Lottery {
   */
   }
   
-  function endLottery() internal {
+  function endLottery() {
     // generate winning number
     uint winningNum = genWinningNumber();
     

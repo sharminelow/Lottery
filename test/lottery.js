@@ -154,5 +154,41 @@ contract('Lottery', function(accounts) {
 
   }).timeout(1000);*/
 
+  it("Claim winnings", function(done) {
+
+    Lottery.new({ from: acc1 }).then(function(lot) {
+
+      var bet = web3.toWei(0.05, 'ether');
+      var bet2 = web3.toWei(0.07, 'ether');
+      var sumOfBets = Number(bet) + Number(bet2);
+      var firstStart = 0;
+      var initialAcc2Balance = 0;
+      var newContractBal = 0;
+      var costOfClaimWinnings = 2493700000006144;
+
+      lot.buyTicket(0, hash, { from: acc2, value: bet }).then(function() {
+        return lot.buyTicket(1, hash2, { from: acc3, value: bet2 });
+      }).then(function() {
+        newContractBal = web3.eth.getBalance(lot.address).toNumber();
+        return lot.stubChangeClaimRound();
+      }).then(function() { 
+        return lot.endLottery();          
+      }).then(function() {
+        return lot.moneyBetPool.call();
+      }).then(function(moneyBetPool) {
+        assert.equal(Number(moneyBetPool), Number(bet), "MoneyBetPool should equal acc1's bet");
+        initialAcc2Balance = web3.eth.getBalance(acc2).toNumber();
+        return lot.claimWinnings({ from: acc2 });
+      }).then(function() {
+        newAcc2Balance = web3.eth.getBalance(acc2).toNumber();
+        acc2Diff = newAcc2Balance - initialAcc2Balance;
+        return lot.jackpot.call();
+      }).then(function(pot) {
+        assert.equal(Number(acc2Diff), Number(pot) - costOfClaimWinnings, "Amount credited should equal jackpot");
+        done();
+      }).catch(done);
+    }).catch(done);
+  });
+
 });
 
