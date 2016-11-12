@@ -196,7 +196,6 @@ contract('Lottery', function(accounts) {
       var firstStart = 0;
       var initialAcc2Balance = 0;
       var newContractBal = 0;
-      var costOfClaimWinnings = 2493700000006144;
 
       lot.buyTicket(0, hash, { from: acc2, value: bet }).then(function() {
         return lot.buyTicket(1, hash2, { from: acc3, value: bet2 });
@@ -216,7 +215,7 @@ contract('Lottery', function(accounts) {
         acc2Diff = newAcc2Balance - initialAcc2Balance;
         return lot.jackpot.call();
       }).then(function(pot) {
-        assert.equal(Number(acc2Diff), Number(pot) - costOfClaimWinnings, "Amount credited should equal jackpot");
+        assert(Number(pot) - acc2Diff < 2500000000000000, "Amount credited should equal jackpot");
         done();
       }).catch(done);
     }).catch(done);
