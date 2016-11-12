@@ -130,7 +130,6 @@ contract Lottery {
 
     if (found == false)
       TicketInvalid(msg.sender); // event
-
   }
 
   function checkCommitments() internal {
@@ -186,7 +185,7 @@ contract Lottery {
   */
   }
   
-  function endLottery() {
+  function endLottery() internal {
     // generate winning number
     uint winningNum = genWinningNumber();
     
@@ -241,5 +240,10 @@ contract Lottery {
   function getCommitHash(uint num) returns (bytes32) {
     return sha256(num);
   }
+
+  function stubEndLottery() {
+    endLottery();
+  }  
+  
 }
 
