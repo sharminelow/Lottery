@@ -29,7 +29,7 @@ contract Lottery {
   uint public commitStart = 0;
   uint public claimStart = 0;
   uint public lotteryDuration = 1; // 1 seconds;
-  uint public commitDuration = 10;
+  uint public commitDuration = 2;
   uint public claimDuration = 10;
 
 
@@ -54,22 +54,11 @@ contract Lottery {
   uint256 public moneyBetPool = 0;
 
   event TicketPurchased(address from, uint bet);
-  event TicketValidated(address from);
-
-  function buyTicket(uint chosenNum, bytes32 hash) payable
-    timedTransitions
-    atRound(Rounds.betRound) 
-    isUniqueHash(hash)
-    withinRange(chosenNum) {
-
-    uint256 amount = msg.value;
-    tickets.push(Ticket({addr: msg.sender,
-                         ticketNum: chosenNum,
-                         commitHash: hash,
-                         moneyBet: amount }));
-    jackpot += amount;
-    TicketPurchased(msg.sender, amount);
-  }
+  event TicketValidated(address from, bytes32 hash);
+  event TicketInvalid(address from);
+  event LotteryEnded();
+  event AllCommitsReceived();
+  event ClaimSuccess(address from, uint amt);
 
   modifier isUniqueHash(bytes32 hash) {
     uint length = tickets.length;
@@ -90,60 +79,58 @@ contract Lottery {
     _;
   }
 
-  function sendCommitNumber(uint num) atRound(Rounds.commitRound) {
-    for(uint t = 0; t < tickets.length; t++) {
-      if(sha256(num) == tickets[t].commitHash && msg.sender == tickets[t].addr) {
-        commitments.push(Commitment({addr: msg.sender, commitNum: num}));
-        successfulTickets.push(tickets[t]); // for partial commitment case
-        break;
-      }
-    }
-
-    /* 
-    xh: i think this part shouldnt be inside this function
-    if (isCommitRoundClosed()) {
-      checkCommitments();
-    }
-    */
-  }
-
   modifier timedTransitions() {
     if (round == Rounds.betRound &&
        ((now - lotteryStart) > lotteryDuration)) {
       round = Rounds.commitRound;   
       commitStart = now;
     }
+
+    if (round == Rounds.commitRound &&
+       ((now - commitStart) > commitDuration)) {
+      round = Rounds.claimRound;
+      checkCommitments();
+    }
     _;
   }
 
-  // Start of testing methods
-  function stubSendNum(uint num) 
+  function buyTicket(uint chosenNum, bytes32 hash) payable
     timedTransitions
-    atRound(Rounds.commitRound) returns (bool) {
-    return true;
+    atRound(Rounds.betRound) 
+    isUniqueHash(hash)
+    withinRange(chosenNum) {
+
+    uint256 amount = msg.value;
+    tickets.push(Ticket({addr: msg.sender,
+                         ticketNum: chosenNum,
+                         commitHash: hash,
+                         moneyBet: amount }));
+    jackpot += amount;
+    TicketPurchased(msg.sender, amount);
   }
 
-  function stubChangeCommitRound() {
-    round = Rounds.commitRound;
-  }
+  function sendCommitNumber(uint num) atRound(Rounds.commitRound) {
+    bool found = false;
 
-  function stubChangeClaimRound() {
-    round = Rounds.claimRound;
-  }
+    for(uint t = 0; t < tickets.length; t++) {
+      if(sha256(num) == tickets[t].commitHash && msg.sender == tickets[t].addr) {
+        commitments.push(Commitment({addr: msg.sender, commitNum: num}));
+        successfulTickets.push(tickets[t]); // for partial commitment case
+        found = true;
+        TicketValidated(msg.sender, tickets[t].commitHash);
+        break;
+      }
+    }
 
-  // xh: for my test, i didnt account for time so i went straight to check commitments instead.
-  function stubCloseCommitRound() {
-    checkCommitments();
-  }
+    if (successfulTickets.length == tickets.length) {
+      round = Rounds.claimRound;
+      AllCommitsReceived(); // event
+      checkCommitments();
+    }
 
-  function getCommitHash(uint num) returns (bytes32) {
-    return sha256(num);
-  }
+    if (found == false)
+      TicketInvalid(msg.sender); // event
 
-  // End of testing methods
-
-  function isCommitRoundClosed() returns (bool) {
-    return ((now - commitStart) > commitDuration);
   }
 
   function checkCommitments() internal {
@@ -161,7 +148,8 @@ contract Lottery {
 
   }
 
-  function claimRefunds() payable {
+  function claimRefunds() payable 
+    timedTransitions {
     for(uint i = 0; i < claimers[msg.sender].length; i++) {
       uint256 amtRefund = claimers[msg.sender][i].moneyBet;
       delete claimers[msg.sender][i];
@@ -210,9 +198,7 @@ contract Lottery {
       }
     }
 
-    // reset variables
-    // startLottery
-    // announcements
+    LotteryEnded();
   }
 
   // Claims all winnings for the particular user
@@ -223,8 +209,37 @@ contract Lottery {
       delete winners[msg.sender][i];
       if (!msg.sender.send(amtWon)) {
         throw;
+      } else {
+        ClaimSuccess(msg.sender, amtWon);
       }
     }
+  }
+
+/* -----------------------------------------------
+                Testing Methods
+-------------------------------------------------*/
+
+  function stubSendNum(uint num) 
+    timedTransitions
+    atRound(Rounds.commitRound) returns (bool) {
+    return true;
+  }
+
+  function stubChangeCommitRound() {
+    round = Rounds.commitRound;
+  }
+
+  function stubChangeClaimRound() {
+    round = Rounds.claimRound;
+  }
+
+  function stubCloseCommitRound() {
+    round = Rounds.claimRound;
+    checkCommitments();
+  }
+
+  function getCommitHash(uint num) returns (bytes32) {
+    return sha256(num);
   }
 }
 

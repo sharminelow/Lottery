@@ -1,11 +1,11 @@
 contract('Lottery', function(accounts) {
-	console.log(accounts);
-	var acc1 = accounts[0];
+  console.log(accounts);
+  var acc1 = accounts[0];
   var acc2 = accounts[1];
   var acc3 = accounts[2];
   var gasPrice = 100000000000; // default
-  var hash = 'd4735e3a265e16eee03f59718b9b5d03019c07d8b6c51f90da3a666eec13ab35'; // hash for number 2
-  var hash2 = '12378112ca1bbdcafac231b39a23dc4da786eff8147c4e72b9807785afee48bb';
+  var hash = '0xd4735e3a265e16eee03f59718b9b5d03019c07d8b6c51f90da3a666eec13ab35';
+  var hash2 = '0xec4916dd28fc4c10d78e287ca5d9cc51ee1ae73cbfde08c6b37324cbfaac8bc5'; // hash for commitment number 1
   var hash3 = '0x9267d3dbed802941483f1afa2a6bc68de5f653128aca9bf1461c5d0a3ad36ed2'; // hash for commitment number 2
 
   it("Successfully buy a ticket", function(done) {
@@ -27,7 +27,6 @@ contract('Lottery', function(accounts) {
         var diff = accBal.minus(endAccBal).abs();
 
         assert.equal(pot, bet.toNumber(), "Jackpot == bet");
-        // console.log(diff); // 64664000000000000 to check for gas
         return lot.lotteryStart.call()
       }).then(function(start) {
         assert.notEqual(start, 0, "lotteryStart > 0");
@@ -152,7 +151,7 @@ contract('Lottery', function(accounts) {
         return lot.round.call();
       }).then(function(round) {
         assert.equal(round, "1", "Round should be commit round");
-        return lot.sendCommitNumber(3, { from: acc2 });
+        return lot.sendCommitNumber(3, { from: acc2 }); // send wrong commit
       }).then(function() {
         return lot.stubCloseCommitRound();
       }).then(function() {
@@ -172,7 +171,7 @@ contract('Lottery', function(accounts) {
     }).catch(done);
   }); 
 
-it("Send commitment, claimRefunds returning 0 and claimWinnings", function(done) {
+  it("Send commitment, claimRefunds returning 0 and claimWinnings", function(done) {
 
     Lottery.new({ from: acc1 }).then(function(lot) {
 
@@ -190,8 +189,6 @@ it("Send commitment, claimRefunds returning 0 and claimWinnings", function(done)
         assert.equal(round, "1", "Round should be commit round");
         return lot.sendCommitNumber(2, { from: acc2 });
       }).then(function() {
-        return lot.stubCloseCommitRound();
-      }).then(function() {
         balance = web3.eth.getBalance(acc2).toNumber();
         console.log("Balance before claimRefunds: " + balance);
         return lot.claimRefunds({ from: acc2 });
@@ -205,7 +202,7 @@ it("Send commitment, claimRefunds returning 0 and claimWinnings", function(done)
         assert.equal(Number(pot), bet, "Pot should still remain the same");
         return lot.stubChangeClaimRound();
       }).then(function() {
-  balance = web3.eth.getBalance(acc2).toNumber();
+        balance = web3.eth.getBalance(acc2).toNumber();
         console.log("Balance before claimWinnings: " + balance);
         return lot.claimWinnings({ from: acc2 });
       }).then(function() {
@@ -214,7 +211,7 @@ it("Send commitment, claimRefunds returning 0 and claimWinnings", function(done)
         var currentBalance = web3.eth.getBalance(acc2).toNumber();
         var diffBalance = currentBalance - balance;
         console.log("Balance after claimWinnings: " + currentBalance);
-        assert(Number(pot) - diffBalance < 2500000000000000, "Amount credited should equal jackpot");
+        assert(Number(pot) - diffBalance < 3000000000000000, "Amount credited should equal jackpot");
         var contractBalance = web3.eth.getBalance(lot.address).toNumber();
         assert.equal(contractBalance, 0, "Contract account should be empty")
         done();
@@ -222,24 +219,56 @@ it("Send commitment, claimRefunds returning 0 and claimWinnings", function(done)
     }).catch(done);
   });
 
-  // this time will pass/fail depending on race conditions, but event is emitted
-/*  it("ticket purchase event shoud emit", function(done) {
 
-      var lot = Lottery.deployed();
-      var bet = web3.toBigNumber(web3.toWei(0.05, 'ether'));
-      var watcher = lot.TicketPurchased();
+  it("When all bets are in, change from commitRound to claimRound", function(done) {
 
-      lot.buyTicket(3, hash, { from: acc2, value: bet }).then(function() {
-        watcher.watch(function(error, result){
-          if (!error) {
-            console.log(result);
-            watcher.stopWatching();
-            done();
-          }
-        });
-      });
+    Lottery.new({ from: acc1 }).then(function(lot) {
+      var bet = web3.toWei(0.05, 'ether');
+      var bet2 = web3.toWei(0.07, 'ether');
 
-  }).timeout(1000);*/
+      lot.buyTicket(0, hash3, { from: acc2, value: bet }).then(function() { // commit number 2
+        return lot.buyTicket(1, hash2, { from: acc3, value: bet2 }); //commit number 1
+      }).then(function() {
+        return lot.stubChangeCommitRound();
+      }).then(function() { 
+        return lot.sendCommitNumber(2, { from: acc2 });          
+      }).then(function() {
+        return lot.sendCommitNumber(1, { from: acc3 });
+      }).then(function() {
+        return lot.round.call();
+      }).then(function(round) {
+        assert.equal(round, "2", "Round should be claim round");
+        done();
+      }).catch(done);
+    }).catch(done);
+
+  });
+
+  it("When not all bets are in, time expires and shift to claim round", function(done) {
+
+    Lottery.new({ from: acc1 }).then(function(lot) {
+      var bet = web3.toWei(0.05, 'ether');
+      var bet2 = web3.toWei(0.07, 'ether');
+
+      lot.buyTicket(0, hash3, { from: acc2, value: bet }).then(function() { // commit number 2
+        return lot.buyTicket(1, hash2, { from: acc3, value: bet2 }); //commit number 1
+      }).then(function() {
+        return lot.stubChangeCommitRound();
+      }).then(function() { 
+        return lot.sendCommitNumber(2, { from: acc2 });          
+      }).then(function() {
+        setTimeout(function() {
+          // someone calls after 4 seconds
+          lot.claimRefunds({ from: acc2 }).then(function(res) {
+            return lot.round.call();
+          }).then(function(round) {
+            assert.equal(round, "2", "Round should be claim round");
+            done();            
+          });
+        }, 4000); 
+      }).catch(done);
+    }).catch(done);
+  });
 
   it("Claim winnings", function(done) {
 
@@ -270,7 +299,7 @@ it("Send commitment, claimRefunds returning 0 and claimWinnings", function(done)
         acc2Diff = newAcc2Balance - initialAcc2Balance;
         return lot.jackpot.call();
       }).then(function(pot) {
-        assert(Number(pot) - acc2Diff < 2500000000000000, "Amount credited should equal jackpot");
+        assert(Number(pot) - acc2Diff < 3000000000000000, "Amount credited should equal jackpot");
         var contractBalance = web3.eth.getBalance(lot.address).toNumber();
         assert.equal(contractBalance, 0, "Contract account should be empty")
         done();
