@@ -146,27 +146,85 @@ contract('Lottery', function(accounts) {
         return lot.round.call();
       }).then(function(round) {
         assert.equal(round, "0", "Round should be bet round");
-        lot.stubChangeCommitRound().then(function() {
-          lot.round.call().then(function(round) {
-            assert.equal(round, "1", "Round should be commit round");
+        return lot.stubChangeCommitRound();
+      }).then(function() {
+        return lot.round.call();
+      }).then(function(round) {
+        assert.equal(round, "1", "Round should be commit round");
+        return lot.sendCommitNumber(3, { from: acc2 });
+      }).then(function() {
+        return lot.stubCloseCommitRound();
+      }).then(function() {
+        balance = web3.eth.getBalance(acc2).toNumber();
+        return lot.claimRefunds({ from: acc2 });
+      }).then(function() {
+        return lot.jackpot.call();
+      }).then(function(pot) {
+        var currentBalance = web3.eth.getBalance(acc2).toNumber();
+        var diffBalance = currentBalance - balance;
+        assert(Number(pot) - diffBalance < 2500000000000000, "Amount refunded should be equal to pot");
 
-            lot.sendCommitNumber(3, { from: acc2 }).then(function() {
-              lot.stubCloseCommitRound().then(function() {
-                balance = web3.eth.getBalance(acc2).toNumber();
-                lot.claimRefunds({ from: acc2 }).then(function() {
-                  var currentBalance = web3.eth.getBalance(acc2).toNumber();
-                  var costOfClaimRefunds = 2470899999997952; // xh: i don't know if this varies for you guys.
-                  assert.equal(currentBalance - balance + costOfClaimRefunds, bet, "Bet is refunded");
-                  done();
-                }).catch(done);
-              }).catch(done);
-            }).catch(done);
-          }).catch(done);
+        var contractBalance = web3.eth.getBalance(lot.address).toNumber();
+        assert.equal(contractBalance, 0, "Contract account should be empty")
+        done();
+      }).catch(done);
+    }).catch(done);
+  }); 
+
+/*  it("Send commitment and claimRefunds returning 0", function(done) {
+
+    Lottery.new({ from: acc1 }).then(function(lot) {
+
+      var bet = web3.toBigNumber(web3.toWei(0.05, 'ether'));
+      var balance = web3.eth.getBalance(acc2).toNumber();
+      
+      lot.getCommitHash(2).then(function(hash) {
+        console.log(hash);
+        lot.buyTicket(0, hash, { from: acc2, value: bet }).then(function() {
+          return lot.round.call();
+        }).then(function(round) {
+          assert.equal(round, "0", "Round should be bet round");
+          return lot.stubChangeCommitRound();
+        }).then(function() {
+          return lot.round.call();
+        }).then(function(round) {
+          assert.equal(round, "1", "Round should be commit round");
+          return lot.sendCommitNumber(2, { from: acc2 });
+        }).then(function() {
+          return lot.stubCloseCommitRound();
+        }).then(function() {
+          balance = web3.eth.getBalance(acc2).toNumber();
+          console.log("Balance before claimRefunds: " + balance);
+          return lot.claimRefunds({ from: acc2 });
+        }).then(function() {
+          return lot.jackpot.call();
+        }).then(function(pot) {
+          var currentBalance = web3.eth.getBalance(acc2).toNumber();
+          console.log("Balance after claimRefunds: " + currentBalance);
+          var diffBalance = balance - currentBalance;
+          assert(diffBalance < 2500000000000000, "Amount refunded should be 0");
+          assert.equal(Number(pot), bet, "Pot should still remain the same");
+          return lot.stubChangeClaimRound();
+        }).then(function() {
+          balance = web3.eth.getBalance(acc2).toNumber();
+          console.log("Balance before claimWinnings: " + balance);
+          return lot.claimWinnings({ from: acc2 });
+        }).then(function() {
+          return lot.jackpot.call();
+        }).then(function(pot) {
+          var currentBalance = web3.eth.getBalance(acc2).toNumber();
+          var diffBalance = currentBalance - balance;
+          console.log(Number(pot));
+          console.log("Balance after claimWinnings: " + currentBalance);
+          assert(Number(pot) - diffBalance < 2500000000000000, "Amount credited should equal jackpot");
+          var contractBalance = web3.eth.getBalance(lot.address).toNumber();
+          assert.equal(contractBalance, 0, "Contract account should be empty")
+          done();
         }).catch(done);
       }).catch(done);
     }).catch(done);
   });
-
+*/
   // this time will pass/fail depending on race conditions, but event is emitted
 /*  it("ticket purchase event shoud emit", function(done) {
 

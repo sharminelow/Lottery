@@ -92,7 +92,7 @@ contract Lottery {
 
   function sendCommitNumber(uint num) atRound(Rounds.commitRound) {
     for(uint t = 0; t < tickets.length; t++) {
-      if(sha256(num ^ uint(msg.sender)) == tickets[t].commitHash && msg.sender == tickets[t].addr) {
+      if(sha256(num) == tickets[t].commitHash && msg.sender == tickets[t].addr) {
         commitments.push(Commitment({addr: msg.sender, commitNum: num}));
         successfulTickets.push(tickets[t]); // for partial commitment case
         break;
@@ -134,6 +134,10 @@ contract Lottery {
   // xh: for my test, i didnt account for time so i went straight to check commitments instead.
   function stubCloseCommitRound() {
     checkCommitments();
+  }
+
+  function getCommitHash(uint num) returns (bytes32) {
+    return sha256(num);
   }
 
   // End of testing methods
