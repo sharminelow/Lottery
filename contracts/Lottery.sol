@@ -32,17 +32,16 @@ contract Lottery {
   uint public commitDuration = 2;
   uint public claimDuration = 10;
 
-
   // Demo
 /*   Rounds public round = Rounds.betRound;
   uint ticketMax = 4;
   uint lotteryStart = now;
   uint commitStart = 0;
   uint claimStart = 0;
-  uint lotteryDuration = 1 minutes;
-  uint commitDuration = 1 minutes;
-  uint claimDuration = 1 minutes;  */
-
+  uint lotteryDuration = 2 minutes;
+  uint commitDuration = 2 minutes;
+  uint claimDuration = 2 minutes; 
+ */
   uint256 public jackpot = 0;
   mapping(address => Ticket[]) public winners;
   mapping(address => Ticket[]) public claimers;
@@ -61,6 +60,7 @@ contract Lottery {
   event AllCommitsReceived(uint num);
   event ClaimSuccess(address from, uint amt);
   event WrongRound(Rounds round);
+  event RoundChanged();
 
   modifier isUniqueHash(bytes32 hash) {
     uint length = tickets.length;
@@ -89,12 +89,14 @@ contract Lottery {
   modifier timedTransitions() {
     if (round == Rounds.betRound &&
        ((now - lotteryStart) > lotteryDuration)) {
+      RoundChanged();
       round = Rounds.commitRound;   
       commitStart = now;
     }
 
     if (round == Rounds.commitRound &&
        ((now - commitStart) > commitDuration)) {
+      RoundChanged();
       round = Rounds.claimRound;
       checkCommitments();
     }
@@ -116,11 +118,14 @@ contract Lottery {
     TicketPurchased(msg.sender, amount);
   }
 
-  function getNumTickets() returns (uint) {
-    return tickets.length;
+  function getNumTickets() constant returns (uint) {
+    uint len = tickets.length;
+    return len;
   }
 
-  function sendCommitNumber(uint num) atRound(Rounds.commitRound) {
+  function sendCommitNumber(uint num) 
+    timedTransitions
+    atRound(Rounds.commitRound) {
     bool found = false;
 
     for(uint t = 0; t < tickets.length; t++) {
@@ -236,6 +241,7 @@ contract Lottery {
   }
 
   function stubChangeCommitRound() {
+    commitStart = now;
     round = Rounds.commitRound;
   }
 

@@ -306,5 +306,19 @@ contract('Lottery', function(accounts) {
     }).catch(done);
   });
 
+  it("Check num tickets", function(done) {
+
+    Lottery.new({ from: acc1 }).then(function(lot) {
+      
+      var bet = web3.toWei(0.05, 'ether');
+
+      lot.buyTicket(0, hash, { from: acc2, value: bet }).then(function() {
+        return lot.getNumTickets()
+      }).then(function(r) {
+        assert.equal(r, 1, "There should be one ticket")
+        done();
+      });
+    }).catch(done);
+  });
 });
 
