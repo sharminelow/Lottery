@@ -38,11 +38,12 @@ contract Lottery {
   uint lotteryStart = now;
   uint commitStart = 0;
   uint claimStart = 0;
-  uint lotteryDuration = 2 minutes;
-  uint commitDuration = 2 minutes;
-  uint claimDuration = 2 minutes; 
- */
+  uint lotteryDuration = 1 days;
+  uint commitDuration = 1 days;
+  uint claimDuration = 1 days;  */
+
   uint256 public jackpot = 0;
+  uint public winningNum = 0;
   mapping(address => Ticket[]) public winners;
   mapping(address => Ticket[]) public claimers;
   Ticket[] tickets;
@@ -176,8 +177,8 @@ contract Lottery {
 
   function genWinningNumber() internal returns (uint) {
     return 0;
-  /*  
-    uint currentBlockNumber = block.number;
+   
+/*     uint currentBlockNumber = block.number;
     bytes32 xorBlockHashes = 0;
     uint xorCommitmentNumber = 0;
 
@@ -185,25 +186,24 @@ contract Lottery {
       xorBlockHashes = xorBlockHashes ^ block.blockhash(currentBlockNumber - i);
     }
 
-    for(uint i = 0; i < commitments.length; i++) {
+    for(uint j = 0; j < commitments.length; j++) {
       xorCommitmentNumber = xorCommitmentNumber ^ commitments[i].commitNum;
     }
 
     bytes32 commitmentNumberInBytes = bytes32(xorCommitmentNumber);
-
     bytes32 randomNumberInBytes = xorBlockHashes ^ commitmentNumberInBytes;
 
-    bytes32 last10Bits = randomNumberInBytes & "0x3ff";
+    uint randomNumber = uint(randomNumberInBytes);
+    uint mask = 0x3ff;
+    uint last10Bits = randomNumber & mask;
+    uint winningNumber = uint(last10Bits);
 
-    uint winningNumber = last10Bits & "0xfff";
-
-    return winningNumber;
-  */
+    return winningNumber; */
   }
   
   function endLottery() internal {
     // generate winning number
-    uint winningNum = genWinningNumber();
+    winningNum = genWinningNumber();
     
     // determine winners and moneyBet pool
     for(uint i = 0; i < tickets.length; i++) {

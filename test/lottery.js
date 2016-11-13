@@ -306,6 +306,32 @@ contract('Lottery', function(accounts) {
     }).catch(done);
   });
 
+  it("See random numebr", function(done) {
+
+    Lottery.new({ from: acc1 }).then(function(lot) {
+
+      var bet = web3.toWei(0.05, 'ether');
+      var bet2 = web3.toWei(0.07, 'ether');
+      var firstStart = 0;
+      var initialAcc2Balance;
+      var acc2Diff;
+
+      lot.buyTicket(0, hash, { from: acc2, value: bet }).then(function() {
+        return lot.buyTicket(1, hash2, { from: acc3, value: bet2 });
+      }).then(function() {
+        newContractBal = web3.eth.getBalance(lot.address).toNumber();
+        return lot.stubChangeClaimRound();
+      }).then(function() { 
+        return lot.stubEndLottery();          
+      }).then(function() {
+        return lot.winningNum.call();
+      }).then(function(num) {
+        done();
+      }).catch(done);
+    }).catch(done);
+  });
+
+
   it("Check num tickets", function(done) {
 
     Lottery.new({ from: acc1 }).then(function(lot) {
