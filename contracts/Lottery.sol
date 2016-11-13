@@ -212,8 +212,8 @@ contract Lottery {
         moneyBetPool += tickets[i].moneyBet;
       }
     }
-
     LotteryEnded();
+    round = Rounds.claimRound;
   }
 
   // Claims all winnings for the particular user
