@@ -23,24 +23,24 @@ contract Lottery {
   address public banker = msg.sender;
 
   // Testing
-  Rounds public round = Rounds.betRound;
+/*   Rounds public round = Rounds.betRound;
   uint public ticketMax = 4;
   uint public lotteryStart = now;
   uint public commitStart = 0;
   uint public claimStart = 0;
   uint public lotteryDuration = 1; // 1 seconds;
   uint public commitDuration = 2;
-  uint public claimDuration = 10;
+  uint public claimDuration = 10; */
 
   // Demo
-/*   Rounds public round = Rounds.betRound;
+  Rounds public round = Rounds.betRound;
   uint ticketMax = 4;
   uint lotteryStart = now;
   uint commitStart = 0;
   uint claimStart = 0;
   uint lotteryDuration = 1 days;
   uint commitDuration = 1 days;
-  uint claimDuration = 1 days;  */
+  uint claimDuration = 1 days; 
 
   uint256 public jackpot = 0;
   uint public winningNum = 0;
@@ -176,9 +176,9 @@ contract Lottery {
   }
 
   function genWinningNumber() internal returns (uint) {
-    return 0;
-   
-/*     uint currentBlockNumber = block.number;
+    //return 0;
+    
+    uint currentBlockNumber = block.number;
     bytes32 xorBlockHashes = 0;
     uint xorCommitmentNumber = 0;
 
@@ -198,7 +198,7 @@ contract Lottery {
     uint last10Bits = randomNumber & mask;
     uint winningNumber = uint(last10Bits);
 
-    return winningNumber; */
+    return winningNumber;
   }
   
   function endLottery() internal {
