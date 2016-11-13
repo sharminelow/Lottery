@@ -221,10 +221,10 @@ contract Lottery {
     atRound(Rounds.claimRound) {
     for(uint i = 0; i < winners[msg.sender].length; i++) {
       uint256 amtWon = winners[msg.sender][i].moneyBet / moneyBetPool * jackpot;
-      delete winners[msg.sender][i];
       if (!msg.sender.send(amtWon)) {
         throw;
       } else {
+        winners[msg.sender][i].moneyBet = 0;
         ClaimSuccess(msg.sender, amtWon);
       }
     }
