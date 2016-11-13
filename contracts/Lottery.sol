@@ -23,24 +23,24 @@ contract Lottery {
   address public banker = msg.sender;
 
   // Testing
-  Rounds public round = Rounds.betRound;
+/*   Rounds public round = Rounds.betRound;
   uint public ticketMax = 4;
   uint public lotteryStart = now;
   uint public commitStart = 0;
   uint public claimStart = 0;
   uint public lotteryDuration = 1; // 1 seconds;
   uint public commitDuration = 2;
-  uint public claimDuration = 10;
+  uint public claimDuration = 10; */
 
   // Demo
-/*   Rounds public round = Rounds.betRound;
+  Rounds public round = Rounds.betRound;
   uint ticketMax = 4;
   uint lotteryStart = now;
   uint commitStart = 0;
   uint claimStart = 0;
   uint lotteryDuration = 1 days;
   uint commitDuration = 1 days;
-  uint claimDuration = 1 days;  */
+  uint claimDuration = 1 days; 
 
   uint256 public jackpot = 0;
   uint public winningNum = 0;
@@ -62,7 +62,8 @@ contract Lottery {
   event ClaimSuccess(address from, uint amt);
   event WrongRound(Rounds round);
   event RoundChanged();
-
+  event NoWinnings();
+  
   modifier isUniqueHash(bytes32 hash) {
     uint length = tickets.length;
     for (uint i = 0; i < length; i++) {
@@ -219,7 +220,9 @@ contract Lottery {
   // Claims all winnings for the particular user
   function claimWinnings() payable 
     atRound(Rounds.claimRound) {
+    bool found = false;
     for(uint i = 0; i < winners[msg.sender].length; i++) {
+      found = true;
       uint256 amtWon = winners[msg.sender][i].moneyBet / moneyBetPool * jackpot;
       if (!msg.sender.send(amtWon)) {
         throw;
@@ -227,6 +230,9 @@ contract Lottery {
         winners[msg.sender][i].moneyBet = 0;
         ClaimSuccess(msg.sender, amtWon);
       }
+    }
+    if (found == false) {
+      NoWinnings();
     }
   }
 
@@ -243,6 +249,7 @@ contract Lottery {
   function stubChangeCommitRound() {
     commitStart = now;
     round = Rounds.commitRound;
+    RoundChanged(); //event
   }
 
   function stubChangeClaimRound() {
